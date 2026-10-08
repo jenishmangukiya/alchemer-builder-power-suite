@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Alchemer Builder Power Suite
 // @namespace    http://tampermonkey.net/
-// @version      8.3.0
-// @description  Power tools for Alchemer Builder: collapsible floating speed dial, one-page survey mode, smooth minimap without hover flickers, quick enable/disable, requirement controls, and canvas scroll unlock.
+// @version      9.1.0
+// @description  Enterprise-grade suite for Alchemer Builder: eye-catching SaaS left nav button, auto-highlighting minimap, expandable textareas, canvas scroll unlock, and inline question controls.
 // @author       Jenish Mangukiya
 // @match        https://*.alchemer.com/builder/build*
 // @match        https://*.alchemer-ca.com/builder/build*
@@ -19,13 +19,24 @@
     // Persistent Settings
     let isMinimapVisible = localStorage.getItem('alc_minimap_visible') === 'true';
     let isQuickDisableEnabled = localStorage.getItem('alc_quick_disable_enabled') !== 'false';
-    let isScrollUnlocked = localStorage.getItem('alc_scroll_unlocked') !== 'false'; // Enabled by default
+    let isScrollUnlocked = localStorage.getItem('alc_scroll_unlocked') !== 'false';
+    let isExpandableTextareaEnabled = localStorage.getItem('alc_expandable_textarea_enabled') !== 'false';
     let isMenuExpanded = false;
 
     // Cache to prevent flickers on interval re-renders
     let lastMinimapSignature = '';
 
-    // 1. Inject UI Styles
+    // Inline SVG Icon Definitions
+    const SVG_ICONS = {
+        bolt: `<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M13 2L3.5 13.5H11L9.5 22L20.5 10.5H13L15 2H13Z"/></svg>`,
+        survey: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>`,
+        minimap: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a8 8 0 00-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 00-8-8z"/><circle cx="12" cy="10" r="3"/></svg>`,
+        controls: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`,
+        unlock: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 019.9-1"/></svg>`,
+        expand: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>`
+    };
+
+    // 1. Inject UI Design System Styles
     GM_addStyle(`
         /* --- Background Canvas Scroll Fix Classes --- */
         body.alc-scroll-unlocked,
@@ -47,6 +58,7 @@
             display: none !important;
         }
 
+        /* Base Main Question Edit Pane Style */
         body.alc-scroll-unlocked #question-edit-pane.pane-open,
         body.alc-scroll-unlocked div[id*="-edit-pane"].pane-open,
         body.alc-scroll-unlocked .pane.pane-open {
@@ -59,168 +71,278 @@
             overflow-y: auto !important;
             z-index: 99990 !important;
             pointer-events: auto !important;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.25) !important;
         }
 
-        /* --- Speed Dial Container --- */
-        #alc-speeddial-wrapper {
-            position: fixed;
-            z-index: 2147483647;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            user-select: none;
-            touch-action: none;
+        /* Overlapping / Secondary Sub-Edit Panes Layering Fix */
+        body.alc-scroll-unlocked .pane.pane-open .pane.pane-open,
+        body.alc-scroll-unlocked .pane.pane-open ~ .pane.pane-open,
+        body.alc-scroll-unlocked div[id*="-edit-pane"].pane-open ~ div[id*="-edit-pane"].pane-open,
+        body.alc-scroll-unlocked .pane.pane-open:not(#question-edit-pane),
+        body.alc-scroll-unlocked div[id*="option"].pane-open,
+        body.alc-scroll-unlocked .sub-pane.pane-open {
+            z-index: 99995 !important;
         }
 
-        /* Speed Dial Menu Items Vertical Stack */
+        /* --- Expandable Textarea Edit Pane Styles --- */
+        body.alc-expandable-textareas [data-options-row] textarea,
+        body.alc-expandable-textareas [data-options-row] textarea[name$="-title"],
+        body.alc-expandable-textareas .options-grid textarea,
+        body.alc-expandable-textareas .pane textarea,
+        body.alc-expandable-textareas div[id*="-edit-pane"] textarea {
+            resize: vertical !important;
+            field-sizing: content !important;
+            min-height: 38px !important;
+            max-height: 300px !important;
+            height: auto !important;
+            overflow-y: auto !important;
+            line-height: 1.4 !important;
+            box-sizing: border-box !important;
+            border-radius: 6px !important;
+            padding: 8px 10px !important;
+            font-size: 13px !important;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+        }
+
+        body.alc-expandable-textareas [data-options-row] textarea:focus,
+        body.alc-expandable-textareas .options-grid textarea:focus,
+        body.alc-expandable-textareas .pane textarea:focus {
+            min-height: 64px !important;
+            border-color: #10B981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+        }
+
+        /* --- Left Nav Eye-Catching SaaS Badge Styles --- */
+        li.alc-nav-item {
+            position: relative !important;
+            list-style: none !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            margin-top: 8px !important;
+        }
+
+        .alc-nav-trigger {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 8px 2px !important;
+            text-decoration: none !important;
+            cursor: pointer !important;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            border-radius: 10px !important;
+            margin: 4px auto !important;
+            width: 48px !important;
+            position: relative !important;
+        }
+
+        .alc-nav-icon-badge {
+            width: 32px !important;
+            height: 32px !important;
+            border-radius: 9px !important;
+            background: linear-gradient(135deg, #10B981 0%, #0284C7 100%) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4) !important;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        .alc-nav-trigger:hover .alc-nav-icon-badge,
+        li.alc-nav-item.open .alc-nav-icon-badge {
+            transform: translateY(-2px) scale(1.08) !important;
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.6) !important;
+            background: linear-gradient(135deg, #34D399 0%, #38BDF8 100%) !important;
+        }
+
+        .alc-nav-label {
+            font-size: 9px !important;
+            font-weight: 800 !important;
+            margin-top: 5px !important;
+            text-align: center !important;
+            letter-spacing: 0.8px !important;
+            text-transform: uppercase !important;
+            color: #34D399 !important;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+            transition: color 0.2s ease !important;
+        }
+
+        .alc-nav-trigger:hover .alc-nav-label,
+        li.alc-nav-item.open .alc-nav-label {
+            color: #FFFFFF !important;
+        }
+
+        /* Pulsing Live Beacon Indicator */
+        .alc-nav-trigger::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 6px !important;
+            right: 6px !important;
+            width: 7px !important;
+            height: 7px !important;
+            border-radius: 50% !important;
+            background-color: #34D399 !important;
+            box-shadow: 0 0 8px #34D399 !important;
+            animation: alc-pulse-beacon 2s infinite !important;
+            z-index: 5 !important;
+        }
+
+        @keyframes alc-pulse-beacon {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.8); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+        }
+
+        /* Popover Executive Flyout Card Attached to Sidebar */
         #alc-speeddial-menu {
+            position: fixed !important;
+            z-index: 2147483647 !important;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 6px;
+            background: #0F172A;
+            border: 1px solid #334155;
+            padding: 14px;
+            border-radius: 14px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
             opacity: 0;
             visibility: hidden;
-            transform: translateY(15px) scale(0.95);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(-12px) scale(0.96);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             pointer-events: none;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            width: 250px;
+            box-sizing: border-box;
         }
 
-        #alc-speeddial-wrapper.open #alc-speeddial-menu {
+        li.alc-nav-item.open #alc-speeddial-menu {
             opacity: 1;
             visibility: visible;
-            transform: translateY(0) scale(1);
+            transform: translateX(0) scale(1);
             pointer-events: auto;
         }
 
-        /* Pill Menu Items - Alchemer High Contrast Palette */
-        .alc-dial-item {
-            background: #FFFFFF;
-            color: #0F172A;
-            border: 1.5px solid #CBD5E1;
-            padding: 9px 18px;
-            border-radius: 25px;
-            font-weight: 700;
-            font-size: 13px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
-            white-space: nowrap;
-            transition: all 0.2s ease;
-        }
-
-        .alc-dial-item:hover {
-            background: #F8FAFC;
-            border-color: #00A36C;
-            color: #00A36C;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 163, 108, 0.2);
-            text-decoration: none;
-        }
-
-        .alc-dial-item.active {
-            background: #00A36C;
-            color: #FFFFFF;
-            border-color: #00A36C;
-        }
-
-        .alc-dial-item.active .alc-dial-icon {
-            background: #FFFFFF;
-            color: #00A36C;
-        }
-
-        .alc-dial-icon {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: #F1F5F9;
-            color: #334155;
+        .alc-popover-header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            transition: all 0.2s ease;
+            justify-content: space-between;
+            padding-bottom: 8px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid #1E293B;
         }
 
-        /* Control Bar Bottom Row (Handle + Main Trigger Button) */
-        .alc-control-bar {
+        .alc-popover-title {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #94A3B8;
             display: flex;
             align-items: center;
             gap: 6px;
-            background: #0F172A;
-            backdrop-filter: blur(8px);
-            padding: 4px 8px 4px 6px;
-            border-radius: 35px;
+        }
+
+        .alc-popover-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10B981;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* Setting Item Buttons inside Flyout */
+        .alc-dial-item {
+            background: #1E293B;
+            color: #E2E8F0;
             border: 1px solid #334155;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-        }
-
-        .alc-drag-handle {
-            cursor: grab;
-            padding: 6px 8px;
-            color: #94A3B8;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            line-height: 1;
-            transition: color 0.2s ease;
-        }
-
-        .alc-drag-handle:hover {
-            color: #FFFFFF;
-        }
-
-        .alc-drag-handle:active {
-            cursor: grabbing;
-        }
-
-        /* Round Main FAB Trigger */
-        .alc-fab-trigger {
-            width: 46px;
-            height: 46px;
-            border-radius: 50%;
-            background: #00A36C;
-            color: #FFFFFF;
-            border: none;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 12px;
             cursor: pointer;
+            text-decoration: none;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            box-shadow: 0 4px 12px rgba(0, 163, 108, 0.4);
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease;
+            justify-content: space-between;
+            transition: all 0.15s ease;
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
         }
 
-        .alc-fab-trigger:hover {
-            background: #00875A;
-            transform: scale(1.05);
+        .alc-dial-item:hover {
+            background: #334155;
+            border-color: #475569;
+            color: #FFFFFF;
+            transform: translateY(-1px);
         }
 
-        #alc-speeddial-wrapper.open .alc-fab-trigger {
-            background: #DC2626;
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
-            transform: rotate(135deg);
+        .alc-dial-item-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* --- Page Minimap (Thicker Bars with Zero-Flicker Hover) --- */
+        .alc-dial-item-icon {
+            display: flex;
+            align-items: center;
+            color: #94A3B8;
+            transition: color 0.15s ease;
+        }
+
+        .alc-dial-item:hover .alc-dial-item-icon {
+            color: #10B981;
+        }
+
+        .alc-status-pill {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            background: #0F172A;
+            color: #64748B;
+            border: 1px solid #334155;
+        }
+
+        .alc-dial-item.active .alc-status-pill {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+            border-color: rgba(52, 211, 153, 0.4);
+        }
+
+        /* --- Page Minimap Glass Rail --- */
         #alc-page-minimap {
             position: fixed;
             right: 0;
             top: 50%;
             transform: translateY(-50%);
+            max-height: 82vh;
+            overflow-y: auto;
             z-index: 999990;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            padding: 12px 6px 12px 14px;
+            align-items: flex-end;
+            gap: 5px;
+            padding: 12px 10px 12px 320px;
+            pointer-events: none;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            transition: opacity 0.2s ease, visibility 0.2s ease;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(16, 185, 129, 0.5) transparent;
+        }
+
+        #alc-page-minimap::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        #alc-page-minimap::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.5);
+            border-radius: 3px;
         }
 
         #alc-page-minimap.hidden {
@@ -230,57 +352,69 @@
         }
 
         .alc-minimap-line {
-            width: 24px;
-            height: 8px;
-            background-color: #00A36C;
-            border-radius: 4px;
+            width: 20px;
+            height: 6px;
+            background-color: #10B981;
+            border-radius: 3px;
             cursor: pointer;
             position: relative;
-            transition: all 0.2s ease;
-            opacity: 0.85;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0.6;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+            pointer-events: auto;
         }
 
         .alc-minimap-line:hover {
-            width: 34px;
-            height: 12px;
+            width: 30px;
+            height: 9px;
             opacity: 1;
-            background-color: #00875A;
-            box-shadow: 0 4px 8px rgba(0, 163, 108, 0.35);
+            background-color: #059669;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Active Page Highlighted State */
+        .alc-minimap-line.active {
+            width: 30px;
+            height: 9px;
+            background-color: #0EA5E9 !important;
+            opacity: 1 !important;
+            box-shadow: 0 0 12px rgba(14, 165, 233, 0.8) !important;
         }
 
         .alc-minimap-line::after {
             content: attr(data-title);
             position: absolute;
-            right: 42px;
+            right: 36px;
             top: 50%;
             transform: translateY(-50%);
             background: #0F172A;
-            color: #FFFFFF;
-            padding: 5px 12px;
-            border-radius: 6px;
+            color: #F8FAFC;
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 11px;
             font-weight: 600;
             white-space: nowrap;
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.15s ease-in-out;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
             border: 1px solid #334155;
+            z-index: 10;
         }
 
         .alc-minimap-line:hover::after {
             opacity: 1;
         }
 
-        /* --- Question Action Link Controls --- */
+        /* --- Question Action Strip Styling --- */
         .alc-action-controls {
             display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 8px;
-            padding-top: 6px;
-            border-top: 1px solid #E2E8F0;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px dashed #CBD5E1;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             user-select: none;
         }
@@ -288,8 +422,7 @@
         .alc-switch-container {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 4px;
+            gap: 6px;
         }
 
         .alc-switch-label {
@@ -303,7 +436,7 @@
         .alc-switch {
             position: relative;
             display: inline-block;
-            width: 34px;
+            width: 32px;
             height: 18px;
             flex-shrink: 0;
         }
@@ -336,11 +469,11 @@
             background-color: white;
             transition: .2s ease;
             border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
 
         input:checked + .alc-slider {
-            background-color: #00A36C;
+            background-color: #10B981;
         }
 
         input:not(:checked) + .alc-slider {
@@ -348,7 +481,7 @@
         }
 
         input:checked + .alc-slider:before {
-            transform: translateX(16px);
+            transform: translateX(14px);
         }
 
         .alc-switch.is-busy .alc-slider {
@@ -357,21 +490,26 @@
         }
 
         .alc-req-select {
-            width: 100%;
-            padding: 3px 6px;
+            flex: 1;
+            padding: 4px 8px;
             font-size: 11px;
             font-weight: 600;
             color: #1E293B;
             background-color: #FFFFFF;
             border: 1px solid #CBD5E1;
-            border-radius: 4px;
+            border-radius: 6px;
             outline: none;
             cursor: pointer;
-            transition: border-color 0.2s ease, opacity 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .alc-req-select:hover {
-            border-color: #00A36C;
+            border-color: #10B981;
+        }
+
+        .alc-req-select:focus {
+            border-color: #10B981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
         }
 
         .alc-req-select:disabled {
@@ -425,6 +563,36 @@
         }
     }
 
+    // 3. Expandable Textarea Logic
+    function applyExpandableTextareaState() {
+        if (isExpandableTextareaEnabled) {
+            document.body.classList.add('alc-expandable-textareas');
+        } else {
+            document.body.classList.remove('alc-expandable-textareas');
+        }
+    }
+
+    function autoResizeTextarea(ta) {
+        if (!isExpandableTextareaEnabled) return;
+        ta.style.height = 'auto';
+        ta.style.height = Math.min(Math.max(ta.scrollHeight, 38), 300) + 'px';
+    }
+
+    function initExpandableTextareas() {
+        applyExpandableTextareaState();
+        if (!isExpandableTextareaEnabled) return;
+
+        const textareas = document.querySelectorAll('.pane textarea, div[id*="-edit-pane"] textarea, [data-options-row] textarea');
+        textareas.forEach(ta => {
+            if (!ta.dataset.alcAutoresize) {
+                ta.dataset.alcAutoresize = 'true';
+                ta.addEventListener('input', () => autoResizeTextarea(ta));
+                ta.addEventListener('focus', () => autoResizeTextarea(ta));
+                autoResizeTextarea(ta);
+            }
+        });
+    }
+
     // URL Helper Methods for Toggle
     function isSinglePageActive() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -443,30 +611,54 @@
         window.location.href = url.toString();
     }
 
-    // 3. Floating Speed Dial Widget Initialization
-    function initFloatingWidget() {
-        if (document.getElementById('alc-speeddial-wrapper')) return;
+    // 4. Left Nav Sidebar Integration
+    function initSidebarWidget() {
+        if (document.getElementById('alc-suite-nav-item')) return;
 
-        const wrapper = document.createElement('div');
-        wrapper.id = 'alc-speeddial-wrapper';
+        const navList = document.querySelector('.primary-nav_list') ||
+                        document.querySelector('.primary_nav_list') ||
+                        document.querySelector('.primary-nav_scroll-wrapper ul') ||
+                        document.querySelector('#primary-nav ul') ||
+                        document.querySelector('nav[role="navigation"] ul');
 
-        // --- Speed Dial Menu Items Vertical Stack ---
+        if (!navList) return;
+
+        const navItem = document.createElement('li');
+        navItem.id = 'alc-suite-nav-item';
+        navItem.className = 'alc-nav-item';
+
+        const trigger = document.createElement('a');
+        trigger.className = 'alc-nav-trigger';
+        trigger.href = 'javascript:void(0);';
+        trigger.title = 'Speed Dial Suite Pro';
+        trigger.innerHTML = `
+            <div class="alc-nav-icon-badge">
+                ${SVG_ICONS.bolt}
+            </div>
+            <span class="alc-nav-label">SUITE</span>
+        `;
+
+        // --- Executive Speed Dial Popover Menu ---
         const menu = document.createElement('div');
         menu.id = 'alc-speeddial-menu';
 
-        // Item 1: Single Page Mode Toggle Button
+        // Popover Header
+        const header = document.createElement('div');
+        header.className = 'alc-popover-header';
+        header.innerHTML = `
+            <span class="alc-popover-title">${SVG_ICONS.bolt} BUILDER SUITE</span>
+            <span class="alc-popover-badge">v9.1 PRO</span>
+        `;
+        menu.appendChild(header);
+
+        // Item 1: Single Page Mode Toggle
         const singlePageBtn = document.createElement('button');
         singlePageBtn.type = 'button';
         singlePageBtn.className = 'alc-dial-item';
+        updateSinglePageBtnState(singlePageBtn);
 
-        if (isSinglePageActive()) {
-            singlePageBtn.classList.add('active');
-            singlePageBtn.innerHTML = `✓ Entire Survey Mode`;
-        } else {
-            singlePageBtn.innerHTML = `📄 Entire Survey (?c=0&p=0)`;
-        }
-
-        singlePageBtn.addEventListener('click', () => {
+        singlePageBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             toggleSinglePageMode();
         });
         menu.appendChild(singlePageBtn);
@@ -477,7 +669,8 @@
         toggleMinimapBtn.className = 'alc-dial-item';
         updateMinimapBtnState(toggleMinimapBtn);
 
-        toggleMinimapBtn.addEventListener('click', () => {
+        toggleMinimapBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             isMinimapVisible = !isMinimapVisible;
             localStorage.setItem('alc_minimap_visible', isMinimapVisible);
             updateMinimapBtnState(toggleMinimapBtn);
@@ -489,13 +682,14 @@
         });
         menu.appendChild(toggleMinimapBtn);
 
-        // Item 3: Enable/Disable Quick Controls
+        // Item 3: Quick Controls Toggle
         const toggleDisableFeatureBtn = document.createElement('button');
         toggleDisableFeatureBtn.type = 'button';
         toggleDisableFeatureBtn.className = 'alc-dial-item';
         updateDisableBtnState(toggleDisableFeatureBtn);
 
-        toggleDisableFeatureBtn.addEventListener('click', () => {
+        toggleDisableFeatureBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             isQuickDisableEnabled = !isQuickDisableEnabled;
             localStorage.setItem('alc_quick_disable_enabled', isQuickDisableEnabled);
             updateDisableBtnState(toggleDisableFeatureBtn);
@@ -509,7 +703,8 @@
         toggleScrollBtn.className = 'alc-dial-item';
         updateScrollBtnState(toggleScrollBtn);
 
-        toggleScrollBtn.addEventListener('click', () => {
+        toggleScrollBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             isScrollUnlocked = !isScrollUnlocked;
             localStorage.setItem('alc_scroll_unlocked', isScrollUnlocked);
             updateScrollBtnState(toggleScrollBtn);
@@ -517,154 +712,158 @@
         });
         menu.appendChild(toggleScrollBtn);
 
-        wrapper.appendChild(menu);
+        // Item 5: Expandable Textareas Toggle
+        const toggleTextareaBtn = document.createElement('button');
+        toggleTextareaBtn.type = 'button';
+        toggleTextareaBtn.className = 'alc-dial-item';
+        updateTextareaBtnState(toggleTextareaBtn);
 
-        // --- Bottom Control Bar (Handle + FAB Trigger) ---
-        const controlBar = document.createElement('div');
-        controlBar.className = 'alc-control-bar';
+        toggleTextareaBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isExpandableTextareaEnabled = !isExpandableTextareaEnabled;
+            localStorage.setItem('alc_expandable_textarea_enabled', isExpandableTextareaEnabled);
+            updateTextareaBtnState(toggleTextareaBtn);
+            applyExpandableTextareaState();
+            initExpandableTextareas();
+        });
+        menu.appendChild(toggleTextareaBtn);
 
-        const handle = document.createElement('div');
-        handle.className = 'alc-drag-handle';
-        handle.innerHTML = '⋮⋮';
-        handle.title = 'Drag to reposition menu';
-        controlBar.appendChild(handle);
+        navItem.appendChild(trigger);
+        navItem.appendChild(menu);
+        navList.appendChild(navItem);
 
-        const fabTrigger = document.createElement('button');
-        fabTrigger.className = 'alc-fab-trigger';
-        fabTrigger.innerHTML = '⚡';
-        fabTrigger.title = 'Click to open tools';
-
-        fabTrigger.addEventListener('click', (e) => {
+        // Trigger Click Handler & Dynamic Position Clamping
+        trigger.addEventListener('click', (e) => {
             e.stopPropagation();
             isMenuExpanded = !isMenuExpanded;
-            wrapper.classList.toggle('open', isMenuExpanded);
-        });
-        controlBar.appendChild(fabTrigger);
+            navItem.classList.toggle('open', isMenuExpanded);
 
-        wrapper.appendChild(controlBar);
-        document.body.appendChild(wrapper);
+            if (isMenuExpanded) {
+                const rect = trigger.getBoundingClientRect();
+                const menuHeight = menu.offsetHeight || 250;
+                let topPos = rect.top;
 
-        // Auto Close Menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (isMenuExpanded && !wrapper.contains(e.target)) {
-                isMenuExpanded = false;
-                wrapper.classList.remove('open');
+                if (topPos + menuHeight > window.innerHeight - 15) {
+                    topPos = Math.max(15, window.innerHeight - menuHeight - 15);
+                }
+
+                menu.style.top = `${topPos}px`;
+                menu.style.left = `${rect.right + 12}px`;
             }
         });
 
-        // --- Boundary Validation & Viewport Clamping ---
-        const savedPos = JSON.parse(localStorage.getItem('alc_widget_pos') || 'null');
-        const widgetWidth = wrapper.offsetWidth || 120;
-        const widgetHeight = wrapper.offsetHeight || 60;
-
-        if (savedPos && typeof savedPos.left === 'number' && typeof savedPos.top === 'number') {
-            const safeLeft = Math.max(10, Math.min(savedPos.left, window.innerWidth - widgetWidth - 10));
-            const safeTop = Math.max(10, Math.min(savedPos.top, window.innerHeight - widgetHeight - 10));
-
-            wrapper.style.left = safeLeft + 'px';
-            wrapper.style.top = safeTop + 'px';
-            wrapper.style.bottom = 'auto';
-            wrapper.style.right = 'auto';
-        } else {
-            wrapper.style.left = '25px';
-            wrapper.style.bottom = '25px';
-            wrapper.style.top = 'auto';
-            wrapper.style.right = 'auto';
-        }
-
-        // --- Dragging Event Handlers ---
-        let isDragging = false;
-        let startX, startY, initialLeft, initialTop;
-
-        handle.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-
-            const rect = wrapper.getBoundingClientRect();
-            initialLeft = rect.left;
-            initialTop = rect.top;
-
-            wrapper.style.right = 'auto';
-            wrapper.style.bottom = 'auto';
-
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
+        // Auto Close Menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (isMenuExpanded && !navItem.contains(e.target)) {
+                isMenuExpanded = false;
+                navItem.classList.remove('open');
+            }
         });
+    }
 
-        function onMouseMove(e) {
-            if (!isDragging) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-
-            let newLeft = Math.max(0, Math.min(initialLeft + dx, window.innerWidth - wrapper.offsetWidth));
-            let newTop = Math.max(0, Math.min(initialTop + dy, window.innerHeight - wrapper.offsetHeight));
-
-            wrapper.style.left = `${newLeft}px`;
-            wrapper.style.top = `${newTop}px`;
-        }
-
-        function onMouseUp() {
-            if (!isDragging) return;
-            isDragging = false;
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-
-            const rect = wrapper.getBoundingClientRect();
-            localStorage.setItem('alc_widget_pos', JSON.stringify({ left: rect.left, top: rect.top }));
-        }
-
-        // Resize Listener
-        window.addEventListener('resize', () => {
-            const rect = wrapper.getBoundingClientRect();
-            const clampedLeft = Math.max(10, Math.min(rect.left, window.innerWidth - wrapper.offsetWidth - 10));
-            const clampedTop = Math.max(10, Math.min(rect.top, window.innerHeight - wrapper.offsetHeight - 10));
-
-            wrapper.style.left = clampedLeft + 'px';
-            wrapper.style.top = clampedTop + 'px';
-        });
+    function updateSinglePageBtnState(btn) {
+        const active = isSinglePageActive();
+        btn.classList.toggle('active', active);
+        btn.innerHTML = `
+            <div class="alc-dial-item-left">
+                <span class="alc-dial-item-icon">${SVG_ICONS.survey}</span>
+                <span>Entire Survey Mode</span>
+            </div>
+            <span class="alc-status-pill">${active ? 'ON' : 'OFF'}</span>
+        `;
     }
 
     function updateMinimapBtnState(btn) {
-        if (isMinimapVisible) {
-            btn.classList.add('active');
-            btn.innerHTML = `📍 Minimap: ON`;
-        } else {
-            btn.classList.remove('active');
-            btn.innerHTML = `📍 Minimap: OFF`;
-        }
+        btn.classList.toggle('active', isMinimapVisible);
+        btn.innerHTML = `
+            <div class="alc-dial-item-left">
+                <span class="alc-dial-item-icon">${SVG_ICONS.minimap}</span>
+                <span>Page Minimap</span>
+            </div>
+            <span class="alc-status-pill">${isMinimapVisible ? 'ON' : 'OFF'}</span>
+        `;
     }
 
     function updateDisableBtnState(btn) {
-        if (isQuickDisableEnabled) {
-            btn.classList.add('active');
-            btn.innerHTML = `⚡ Quick Controls: ON`;
-        } else {
-            btn.classList.remove('active');
-            btn.innerHTML = `⚡ Quick Controls: OFF`;
-        }
+        btn.classList.toggle('active', isQuickDisableEnabled);
+        btn.innerHTML = `
+            <div class="alc-dial-item-left">
+                <span class="alc-dial-item-icon">${SVG_ICONS.controls}</span>
+                <span>Quick Controls</span>
+            </div>
+            <span class="alc-status-pill">${isQuickDisableEnabled ? 'ON' : 'OFF'}</span>
+        `;
     }
 
     function updateScrollBtnState(btn) {
-        if (isScrollUnlocked) {
-            btn.classList.add('active');
-            btn.innerHTML = `🔓 Edit Scroll: ON`;
-        } else {
-            btn.classList.remove('active');
-            btn.innerHTML = `🔒 Edit Scroll: OFF`;
-        }
+        btn.classList.toggle('active', isScrollUnlocked);
+        btn.innerHTML = `
+            <div class="alc-dial-item-left">
+                <span class="alc-dial-item-icon">${SVG_ICONS.unlock}</span>
+                <span>Edit Canvas Scroll</span>
+            </div>
+            <span class="alc-status-pill">${isScrollUnlocked ? 'ON' : 'OFF'}</span>
+        `;
     }
 
-    // 4. Page Minimap Initialization (Flicker Free)
+    function updateTextareaBtnState(btn) {
+        btn.classList.toggle('active', isExpandableTextareaEnabled);
+        btn.innerHTML = `
+            <div class="alc-dial-item-left">
+                <span class="alc-dial-item-icon">${SVG_ICONS.expand}</span>
+                <span>Expand Textareas</span>
+            </div>
+            <span class="alc-status-pill">${isExpandableTextareaEnabled ? 'ON' : 'OFF'}</span>
+        `;
+    }
+
+    // 5. Page Minimap Real-Time Scrolling & Active Page Highlight
+    function highlightActivePage(sections) {
+        const minimap = document.getElementById('alc-page-minimap');
+        if (!minimap || !isMinimapVisible) return;
+
+        const pageSections = sections || document.querySelectorAll('.survey-canvas section.page, section[data-pid], section[id^="section-"]');
+        const lines = minimap.querySelectorAll('.alc-minimap-line');
+        if (pageSections.length === 0 || lines.length === 0) return;
+
+        let activeIdx = 0;
+        let minDistance = Infinity;
+
+        pageSections.forEach((sectionEl, idx) => {
+            const rect = sectionEl.getBoundingClientRect();
+            const diff = Math.abs(rect.top - 120);
+            if (rect.top <= window.innerHeight * 0.65 && rect.bottom >= 100) {
+                if (diff < minDistance) {
+                    minDistance = diff;
+                    activeIdx = idx;
+                }
+            }
+        });
+
+        lines.forEach((line, idx) => {
+            if (idx === activeIdx) {
+                if (!line.classList.contains('active')) {
+                    line.classList.add('active');
+                    line.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            } else {
+                line.classList.remove('active');
+            }
+        });
+    }
+
     function initPageMinimap() {
         let minimap = document.getElementById('alc-page-minimap');
         if (!minimap) {
             minimap = document.createElement('div');
             minimap.id = 'alc-page-minimap';
             document.body.appendChild(minimap);
+
+            window.addEventListener('scroll', () => highlightActivePage(), { passive: true });
         }
 
         minimap.classList.toggle('hidden', !isMinimapVisible);
+        if (!isMinimapVisible) return;
 
         const pageSections = document.querySelectorAll('.survey-canvas section.page, section[data-pid], section[id^="section-"]');
 
@@ -679,32 +878,32 @@
             let rawTitle = headingEl ? headingEl.innerText : sectionEl.innerText;
             rawTitle = rawTitle.replace(/\s+/g, ' ').trim();
             const displayTitle = rawTitle.length > 35 ? rawTitle.substring(0, 35) + '...' : rawTitle || `Page ${idx + 1}`;
-            return { displayTitle, sectionEl };
+            return { displayTitle: `P.${idx + 1} — ${displayTitle}`, sectionEl };
         });
 
         const currentSignature = currentData.map(d => d.displayTitle).join('||');
 
-        if (currentSignature === lastMinimapSignature && minimap.children.length === currentData.length) {
-            return;
+        if (currentSignature !== lastMinimapSignature || minimap.children.length !== currentData.length) {
+            lastMinimapSignature = currentSignature;
+            minimap.innerHTML = '';
+
+            currentData.forEach(({ displayTitle, sectionEl }) => {
+                const line = document.createElement('div');
+                line.className = 'alc-minimap-line';
+                line.setAttribute('data-title', displayTitle);
+
+                line.addEventListener('click', () => {
+                    sectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+
+                minimap.appendChild(line);
+            });
         }
 
-        lastMinimapSignature = currentSignature;
-        minimap.innerHTML = '';
-
-        currentData.forEach(({ displayTitle, sectionEl }) => {
-            const line = document.createElement('div');
-            line.className = 'alc-minimap-line';
-            line.setAttribute('data-title', displayTitle);
-
-            line.addEventListener('click', () => {
-                sectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-
-            minimap.appendChild(line);
-        });
+        highlightActivePage(pageSections);
     }
 
-    // 5. Requirement Detection Helper
+    // 6. Requirement Detection Helper
     function detectRequirementState(articleEl) {
         if (!articleEl) return 'not_required';
         const metaItems = articleEl.querySelectorAll('.q-meta-data ul li, .js-meta-data ul li');
@@ -720,7 +919,7 @@
         return 'not_required';
     }
 
-    // 6. Injection of Switch Toggle & Requirement Controls
+    // 7. Injection of Switch Toggle & Requirement Controls
     function injectActionLinks() {
         const containers = document.querySelectorAll('.question-action-links');
 
@@ -746,7 +945,7 @@
 
                 if (existingCheckbox && !existingControls.dataset.busy) {
                     existingCheckbox.checked = !isCurrentlyDisabled;
-                    if (existingLabel) existingLabel.textContent = isCurrentlyDisabled ? 'Disabled' : 'Enabled';
+                    if (existingLabel) existingLabel.textContent = isCurrentlyDisabled ? 'Off' : 'On';
                 }
                 if (existingSelect && !existingControls.dataset.busy) {
                     existingSelect.value = currentReqState;
@@ -763,7 +962,7 @@
 
             const labelText = document.createElement('span');
             labelText.className = 'alc-switch-label';
-            labelText.textContent = isCurrentlyDisabled ? 'Disabled' : 'Enabled';
+            labelText.textContent = isCurrentlyDisabled ? 'Off' : 'On';
 
             const switchLabel = document.createElement('label');
             switchLabel.className = 'alc-switch';
@@ -827,15 +1026,15 @@
                     const saveBtn = await waitForElement('#js-question-edit-action-submit, button.js-save-quest[type="submit"]');
                     saveBtn.click();
 
-                    labelText.textContent = shouldEnable ? 'Enabled' : 'Disabled';
+                    labelText.textContent = shouldEnable ? 'On' : 'Off';
 
                     if (questionCard) {
                         questionCard.classList.toggle('disabled-element', !shouldEnable);
                     }
                 } catch (err) {
-                    console.error('[Alchemer Builder Power Suite] Error toggling status:', err);
+                    console.error('[Alchemer Builder Suite] Error toggling status:', err);
                     checkbox.checked = !shouldEnable;
-                    labelText.textContent = checkbox.checked ? 'Enabled' : 'Disabled';
+                    labelText.textContent = checkbox.checked ? 'On' : 'Off';
                 } finally {
                     switchLabel.classList.remove('is-busy');
                     delete controlsWrap.dataset.busy;
@@ -872,7 +1071,7 @@
                     saveBtn.click();
 
                 } catch (err) {
-                    console.error('[Alchemer Builder Power Suite] Error updating requirement setting:', err);
+                    console.error('[Alchemer Builder Suite] Error updating requirement setting:', err);
                     selectReq.value = detectRequirementState(questionCard);
                 } finally {
                     delete controlsWrap.dataset.busy;
@@ -888,7 +1087,8 @@
     // Main Execution Loop
     function runSuite() {
         applyScrollState();
-        initFloatingWidget();
+        initSidebarWidget();
+        initExpandableTextareas();
         initPageMinimap();
         injectActionLinks();
     }

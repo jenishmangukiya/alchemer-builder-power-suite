@@ -6,12 +6,22 @@
 
 **Power tools that make building surveys in the [Alchemer](https://www.alchemer.com/) Builder faster and less frustrating.**
 
-A Tampermonkey userscript that adds a collapsible floating speed dial, one-page survey mode, a smooth page minimap, quick enable/disable toggles, requirement controls, and canvas scroll unlocking — all directly inside the Alchemer survey builder.
+A Tampermonkey userscript that lives right in your **Alchemer side navigation bar** and opens a dark, SaaS-style control panel — one-page survey mode, an auto-highlighting page minimap, inline quick controls, expandable textareas, and canvas scroll unlocking — all directly inside the Alchemer survey builder.
 
-[![Version](https://img.shields.io/badge/version-8.3.0-blue?style=flat-square)](https://github.com/jenishmangukiya/alchemer-builder-power-suite)
+[![Version](https://img.shields.io/badge/version-9.1.0-blue?style=flat-square)](https://github.com/jenishmangukiya/alchemer-builder-power-suite)
 [![Platform](https://img.shields.io/badge/platform-Alchemer%20Builder-6f4bd8?style=flat-square)](https://www.alchemer.com/)
 [![Powered by](https://img.shields.io/badge/powered%20by-Tampermonkey-00a94f?style=flat-square)](https://www.tampermonkey.net/)
 [![Author](https://img.shields.io/badge/author-Jenish%20Mangukiya-orange?style=flat-square)](#-credits)
+
+</div>
+
+---
+
+<div align="center">
+
+<img src="assets/builder-suite-ui.png" alt="Alchemer Builder Power Suite panel open in the Alchemer side navigation bar" width="420">
+
+**The ⚡ SUITE item in your sidebar opens the Builder Suite control panel.**
 
 </div>
 
@@ -21,7 +31,7 @@ A Tampermonkey userscript that adds a collapsible floating speed dial, one-page 
 
 [Alchemer](https://www.alchemer.com/) is a powerful, enterprise-grade online survey and data-collection platform (formerly **SurveyGizmo**). Its **Builder** is where you create and edit surveys — but the default editor can be fiddly: you bounce between pages, lose your place in long surveys, and fight with locked scroll while editing.
 
-**Alchemer Builder Power Suite** is a lightweight userscript that layers a set of productivity tools on top of the Builder. It does **not** change your survey data — it only improves the editing experience in your browser.
+**Alchemer Builder Power Suite** is a lightweight userscript that layers a set of productivity tools directly into the Builder's own sidebar. It does **not** change your survey data — it only improves the editing experience in your browser.
 
 > ⚠️ This is a third-party community tool. It is **not affiliated with, endorsed by, or sponsored by Alchemer**.
 
@@ -32,7 +42,7 @@ A Tampermonkey userscript that adds a collapsible floating speed dial, one-page 
 1. Install the [Tampermonkey extension](https://www.tampermonkey.net/) for your browser.
 2. **[Click here to install Alchemer Builder Power Suite](https://raw.githubusercontent.com/jenishmangukiya/alchemer-builder-power-suite/main/alchemer-builder-power-suite.user.js)**
 3. Click **Install** when the Tampermonkey prompt opens.
-4. Open any Alchemer survey in the **Builder** — the ⚡ speed dial appears automatically.
+4. Open any Alchemer survey in the **Builder** — a glowing **SUITE** item appears in the left navigation bar.
 
 > **Note:** Updates are automatic! Tampermonkey periodically checks this repository and installs new versions when available.
 
@@ -42,28 +52,31 @@ A Tampermonkey userscript that adds a collapsible floating speed dial, one-page 
 
 | Feature | What it does |
 | --- | --- |
-| **⚡ Floating Speed Dial** | A draggable toolbar that can be repositioned anywhere on screen and collapses to a single button. Its position is remembered. |
+| **🧭 Built into the Side Nav** | Adds a glowing **SUITE** item to Alchemer's own left navigation, complete with a gradient icon and a pulsing live beacon. Easy to spot and always within reach — no floating widget to chase around the screen. |
+| **🪟 Builder Suite Panel** | A polished dark popover card (`v9.1 PRO`) that anchors beside the nav item, auto-clamps to stay on screen at any window size, and closes when you click away. |
 | **📄 Entire Survey Mode** | One click toggles `?c=0&p=0` and renders the whole survey on a single page — click again to return to normal paged mode. |
-| **📍 Smooth Page Minimap** | Thicker indicators on the right margin let you jump across survey pages quickly, with no hover flicker. |
-| **⚡ Quick Enable/Disable** | Turn individual questions on or off right from the question action menu, without opening full settings. |
-| **📋 Requirement Controls** | Instantly switch a question between **Not Required**, **Required**, and **Soft Required** from the action links. |
-| **🔓 Canvas Scroll Unlock** | Fixes locked background scrolling while edit panes or modals are open, so you can keep working. |
+| **📍 Auto-Highlighting Minimap** | A glass rail of page indicators on the right margin. The page you're currently viewing is highlighted automatically and scrolled into view, with `P.n — title` tooltips on hover. |
+| **⚡ Quick Controls** | Turn individual questions on or off right from the question action links, without opening full settings. |
+| **📋 Requirement Controls** | Instantly switch a question between **Not required**, **Required**, and **Soft Required** from an inline dropdown. |
+| **🔓 Edit Canvas Scroll** | Fixes locked background scrolling while edit panes or modals are open, so you can keep working. |
+| **↕️ Expand Textareas** | Auto-growing, vertically resizable textareas in the edit panes, so long labels and option text are easy to read and edit. |
 
 ---
 
 ## 🕹️ How to use
 
-1. Click the **⚡** button in the bottom-left corner to expand the speed dial menu.
-2. Use the buttons to toggle features on or off — your choices are saved automatically.
-3. Drag the **⋮⋮** handle to move the widget wherever you like.
-4. Click anywhere outside the menu to collapse it.
+1. Find the **⚡ SUITE** item in the Alchemer **left navigation bar** (it has a pulsing green beacon so it's easy to spot).
+2. Click it to open the **Builder Suite** flyout panel. It positions itself next to the nav item and stays on screen at any window size.
+3. Use the buttons to toggle features on or off — each shows a live **ON / OFF** pill and your choices are saved automatically.
+4. Click anywhere outside the panel to close it.
 
-### Speed dial options
+### Builder Suite options
 
-- **📄 Entire Survey (?c=0&p=0)** — switch between full-page and paged survey views.
-- **📍 Minimap: ON / OFF** — show or hide the right-margin page minimap.
-- **⚡ Quick Controls: ON / OFF** — enable or disable the inline question controls.
-- **🔓 Edit Scroll: ON / OFF** — unlock or lock background scrolling while editing.
+- **📄 Entire Survey Mode** — switch between full-page and paged survey views (`?c=0&p=0`).
+- **📍 Page Minimap: ON / OFF** — show or hide the auto-highlighting right-margin page minimap.
+- **⚡ Quick Controls: ON / OFF** — enable or disable the inline question on/off switch and requirement dropdown.
+- **🔓 Edit Canvas Scroll: ON / OFF** — unlock or lock background scrolling while editing.
+- **↕️ Expand Textareas: ON / OFF** — auto-grow and vertically resize textareas in edit panes.
 
 ---
 
@@ -87,7 +100,7 @@ The script remembers your preferences in your browser's `localStorage`:
 | `alc_minimap_visible` | Show the page minimap | `false` |
 | `alc_quick_disable_enabled` | Enable inline question controls | `true` |
 | `alc_scroll_unlocked` | Unlock background canvas scrolling | `true` |
-| `alc_widget_pos` | Remembered position of the speed dial | bottom-left |
+| `alc_expandable_textarea_enabled` | Auto-expand textareas in edit panes | `true` |
 
 ---
 
@@ -117,6 +130,9 @@ It only changes how the Builder looks and behaves in your browser — it does no
 **Does it collect any of my data?**
 No. There is no analytics, tracking, or network traffic. Your preferences are saved locally in your browser via `localStorage`.
 
+**Where did the old floating button go?**
+As of **v9.1**, the suite lives in Alchemer's own left navigation bar as the **SUITE** item — it's easier to reach and no longer overlaps your survey canvas.
+
 **Will it work after Alchemer updates the Builder?**
 The script targets stable Builder elements, but major platform UI changes could require an update. Tampermonkey auto-updates from this repository, so you'll get fixes automatically.
 
@@ -130,6 +146,8 @@ No. It's an independent, community-built tool and is not affiliated with or endo
 ```
 alchemer-builder-power-suite/
 ├── alchemer-builder-power-suite.user.js   # The Tampermonkey userscript
+├── assets/
+│   └── builder-suite-ui.png               # Screenshot of the Builder Suite panel
 └── README.md                              # This file
 ```
 
@@ -145,7 +163,7 @@ alchemer-builder-power-suite/
 
 <div align="center">
 
-**Alchemer Builder Power Suite** · v8.3.0
+**Alchemer Builder Power Suite** · v9.1.0
 
 Built to make survey building faster ⚡
 
