@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Alchemer Builder Power Suite
 // @namespace    http://tampermonkey.net/
-// @version      9.1.0
+// @version      9.5.0
 // @description  Enterprise-grade suite for Alchemer Builder: eye-catching SaaS left nav button, auto-highlighting minimap, expandable textareas, canvas scroll unlock, and inline question controls.
 // @author       Jenish Mangukiya
 // @match        https://*.alchemer.com/builder/build*
@@ -33,7 +33,8 @@
         minimap: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a8 8 0 00-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 00-8-8z"/><circle cx="12" cy="10" r="3"/></svg>`,
         controls: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`,
         unlock: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 019.9-1"/></svg>`,
-        expand: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>`
+        expand: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>`,
+        github: `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>`
     };
 
     // 1. Inject UI Design System Styles
@@ -253,6 +254,31 @@
             border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
+        .alc-popover-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 8px;
+            margin-top: 4px;
+            border-top: 1px solid #1E293B;
+        }
+
+        .alc-github-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #94A3B8;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+            transition: color 0.15s ease;
+        }
+
+        .alc-github-link:hover {
+            color: #38BDF8;
+            text-decoration: none;
+        }
+
         /* Setting Item Buttons inside Flyout */
         .alc-dial-item {
             background: #1E293B;
@@ -407,114 +433,74 @@
             opacity: 1;
         }
 
-        /* --- Question Action Strip Styling --- */
-        .alc-action-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1px dashed #CBD5E1;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            user-select: none;
+        /* --- Question Quick Controls Container & Card Redesign --- */
+        .question-action-links {
+            overflow: visible !important;
         }
 
-        .alc-switch-container {
+        .alc-action-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .alc-control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .alc-control-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #475569;
+        }
+
+        .alc-radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: #FFFFFF;
+            padding: 6px 8px;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .alc-radio-option {
             display: flex;
             align-items: center;
             gap: 6px;
-        }
-
-        .alc-switch-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748B;
-        }
-
-        .alc-switch {
-            position: relative;
-            display: inline-block;
-            width: 32px;
-            height: 18px;
-            flex-shrink: 0;
-        }
-
-        .alc-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .alc-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #CBD5E1;
-            transition: .2s ease;
-            border-radius: 18px;
-        }
-
-        .alc-slider:before {
-            position: absolute;
-            content: "";
-            height: 14px;
-            width: 14px;
-            left: 2px;
-            bottom: 2px;
-            background-color: white;
-            transition: .2s ease;
-            border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-
-        input:checked + .alc-slider {
-            background-color: #10B981;
-        }
-
-        input:not(:checked) + .alc-slider {
-            background-color: #EF4444;
-        }
-
-        input:checked + .alc-slider:before {
-            transform: translateX(14px);
-        }
-
-        .alc-switch.is-busy .alc-slider {
-            opacity: 0.5;
-            cursor: wait;
-        }
-
-        .alc-req-select {
-            flex: 1;
-            padding: 4px 8px;
             font-size: 11px;
             font-weight: 600;
             color: #1E293B;
-            background-color: #FFFFFF;
-            border: 1px solid #CBD5E1;
-            border-radius: 6px;
-            outline: none;
             cursor: pointer;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            margin: 0;
         }
 
-        .alc-req-select:hover {
-            border-color: #10B981;
+        .alc-radio-option input[type="radio"] {
+            margin: 0;
+            cursor: pointer;
+            accent-color: #10B981;
         }
 
-        .alc-req-select:focus {
-            border-color: #10B981;
-            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-        }
-
-        .alc-req-select:disabled {
-            opacity: 0.5;
-            cursor: wait;
+        .alc-action-controls.is-busy {
+            opacity: 0.6;
+            pointer-events: none;
         }
     `);
 
@@ -647,7 +633,7 @@
         header.className = 'alc-popover-header';
         header.innerHTML = `
             <span class="alc-popover-title">${SVG_ICONS.bolt} BUILDER SUITE</span>
-            <span class="alc-popover-badge">v9.1 PRO</span>
+            <span class="alc-popover-badge">v9.5 PRO</span>
         `;
         menu.appendChild(header);
 
@@ -727,6 +713,18 @@
             initExpandableTextareas();
         });
         menu.appendChild(toggleTextareaBtn);
+
+        // Popover Footer with GitHub Repo Link
+        const footer = document.createElement('div');
+        footer.className = 'alc-popover-footer';
+        footer.innerHTML = `
+            <a href="https://github.com/jenishmangukiya/alchemer-builder-power-suite/" target="_blank" rel="noopener noreferrer" class="alc-github-link">
+                ${SVG_ICONS.github}
+                <span>GitHub Repository</span>
+            </a>
+            <span style="font-size: 10px; color: #475569; font-weight: 700;">v9.5</span>
+        `;
+        menu.appendChild(footer);
 
         navItem.appendChild(trigger);
         navItem.appendChild(menu);
@@ -919,7 +917,7 @@
         return 'not_required';
     }
 
-    // 7. Injection of Switch Toggle & Requirement Controls
+    // 7. Injection of Radio Controls
     function injectActionLinks() {
         const containers = document.querySelectorAll('.question-action-links');
 
@@ -934,84 +932,182 @@
             const editBtn = container.querySelector('a.edit-link');
             if (!editBtn) return;
 
-            const questionCard = container.closest('article.action-element, article[id^="element-"]');
+            // Find closest parent question card
+            const questionCard = container.closest('article.action-element, article[id^="element-"], article.decorative-instructions');
+
+            // Exclude finish line / section top banners
+            const isFinishLineBanner =
+                !questionCard ||
+                questionCard.classList.contains('insert-top') ||
+                questionCard.classList.contains('inset-top') ||
+                questionCard.classList.contains('finish-line-top') ||
+                questionCard.classList.contains('finish-line-bottom') ||
+                !!container.closest('.finish-line-top, .finish-line-bottom, .insert-top, .inset-top');
+
+            if (isFinishLineBanner) {
+                if (existingControls) existingControls.remove();
+                return;
+            }
+
+            // Unique ID per element for radio input names
+            const elemUid = questionCard.id || questionCard.getAttribute('eid') || Math.random().toString(36).substring(2, 9);
+
+            // Detect Text / Instruction question type
+            const isTextInstruction =
+                questionCard.classList.contains('decorative-instructions') ||
+                !!questionCard.querySelector('.sg-type-instruction') ||
+                (questionCard.textContent && (
+                    questionCard.textContent.includes('Type: Text / Instructions') ||
+                    questionCard.textContent.includes('Text/Instruction')
+                ));
+
             const isCurrentlyDisabled = questionCard ? questionCard.classList.contains('disabled-element') : false;
             const currentReqState = detectRequirementState(questionCard);
 
             if (existingControls) {
-                const existingCheckbox = existingControls.querySelector('input[type="checkbox"]');
-                const existingLabel = existingControls.querySelector('.alc-switch-label');
-                const existingSelect = existingControls.querySelector('.alc-req-select');
+                const radioEnable = existingControls.querySelector(`input[name="alc_status_${elemUid}"][value="enable"]`);
+                const radioDisable = existingControls.querySelector(`input[name="alc_status_${elemUid}"][value="disable"]`);
 
-                if (existingCheckbox && !existingControls.dataset.busy) {
-                    existingCheckbox.checked = !isCurrentlyDisabled;
-                    if (existingLabel) existingLabel.textContent = isCurrentlyDisabled ? 'Off' : 'On';
+                if (radioEnable && radioDisable && !existingControls.dataset.busy) {
+                    radioEnable.checked = !isCurrentlyDisabled;
+                    radioDisable.checked = isCurrentlyDisabled;
                 }
-                if (existingSelect && !existingControls.dataset.busy) {
-                    existingSelect.value = currentReqState;
+
+                if (!isTextInstruction) {
+                    const radioReqVal = existingControls.querySelector(`input[name="alc_req_${elemUid}"][value="${currentReqState}"]`);
+                    if (radioReqVal && !existingControls.dataset.busy) {
+                        radioReqVal.checked = true;
+                    }
                 }
                 return;
             }
 
+            // Outer Card Container (No title header)
             const controlsWrap = document.createElement('div');
             controlsWrap.className = 'alc-action-controls';
 
-            // Switch Toggle
-            const switchWrap = document.createElement('div');
-            switchWrap.className = 'alc-switch-container';
+            // --- Control Group 1: Enable / Disable Radio Buttons ---
+            const statusGroup = document.createElement('div');
+            statusGroup.className = 'alc-control-group';
 
-            const labelText = document.createElement('span');
-            labelText.className = 'alc-switch-label';
-            labelText.textContent = isCurrentlyDisabled ? 'Off' : 'On';
+            const statusLabel = document.createElement('span');
+            statusLabel.className = 'alc-control-label';
+            statusLabel.textContent = 'Enable / Disable';
 
-            const switchLabel = document.createElement('label');
-            switchLabel.className = 'alc-switch';
+            const statusRadioBox = document.createElement('div');
+            statusRadioBox.className = 'alc-radio-group';
 
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = !isCurrentlyDisabled;
+            // Option 1: Enabled
+            const lblEnable = document.createElement('label');
+            lblEnable.className = 'alc-radio-option';
 
-            const slider = document.createElement('span');
-            slider.className = 'alc-slider';
+            const rEnable = document.createElement('input');
+            rEnable.type = 'radio';
+            rEnable.name = `alc_status_${elemUid}`;
+            rEnable.value = 'enable';
+            rEnable.checked = !isCurrentlyDisabled;
 
-            switchLabel.appendChild(checkbox);
-            switchLabel.appendChild(slider);
+            lblEnable.appendChild(rEnable);
+            lblEnable.appendChild(document.createTextNode('Enabled'));
 
-            switchWrap.appendChild(labelText);
-            switchWrap.appendChild(switchLabel);
+            // Option 2: Disabled
+            const lblDisable = document.createElement('label');
+            lblDisable.className = 'alc-radio-option';
 
-            // Requirement Select Dropdown
-            const selectReq = document.createElement('select');
-            selectReq.className = 'alc-req-select';
+            const rDisable = document.createElement('input');
+            rDisable.type = 'radio';
+            rDisable.name = `alc_status_${elemUid}`;
+            rDisable.value = 'disable';
+            rDisable.checked = isCurrentlyDisabled;
 
-            const optNotReq = document.createElement('option');
-            optNotReq.value = 'not_required';
-            optNotReq.textContent = 'Not required';
+            lblDisable.appendChild(rDisable);
+            lblDisable.appendChild(document.createTextNode('Disabled'));
 
-            const optReq = document.createElement('option');
-            optReq.value = 'required';
-            optReq.textContent = 'Required';
+            statusRadioBox.appendChild(lblEnable);
+            statusRadioBox.appendChild(lblDisable);
 
-            const optSoftReq = document.createElement('option');
-            optSoftReq.value = 'soft_required';
-            optSoftReq.textContent = 'Soft Required';
+            statusGroup.appendChild(statusLabel);
+            statusGroup.appendChild(statusRadioBox);
+            controlsWrap.appendChild(statusGroup);
 
-            selectReq.appendChild(optNotReq);
-            selectReq.appendChild(optReq);
-            selectReq.appendChild(optSoftReq);
+            // --- Control Group 2: Validation Radio Buttons (Omitted for Text/Instructions) ---
+            if (!isTextInstruction) {
+                const reqGroup = document.createElement('div');
+                reqGroup.className = 'alc-control-group alc-control-group-validation';
 
-            selectReq.value = currentReqState;
+                const reqLabel = document.createElement('span');
+                reqLabel.className = 'alc-control-label';
+                reqLabel.textContent = 'Validation';
 
-            controlsWrap.appendChild(switchWrap);
-            controlsWrap.appendChild(selectReq);
+                const reqRadioBox = document.createElement('div');
+                reqRadioBox.className = 'alc-radio-group';
 
-            // Handler: Toggle Switch
-            checkbox.addEventListener('change', async () => {
-                const shouldEnable = checkbox.checked;
-                switchLabel.classList.add('is-busy');
+                const validationOptions = [
+                    { value: 'not_required', text: 'Not required' },
+                    { value: 'required', text: 'Required' },
+                    { value: 'soft_required', text: 'Soft Required' }
+                ];
+
+                validationOptions.forEach(opt => {
+                    const lblOpt = document.createElement('label');
+                    lblOpt.className = 'alc-radio-option';
+
+                    const rOpt = document.createElement('input');
+                    rOpt.type = 'radio';
+                    rOpt.name = `alc_req_${elemUid}`;
+                    rOpt.value = opt.value;
+                    rOpt.checked = currentReqState === opt.value;
+
+                    // Handler: Change Validation
+                    rOpt.addEventListener('change', async () => {
+                        controlsWrap.classList.add('is-busy');
+                        controlsWrap.dataset.busy = 'true';
+
+                        try {
+                            editBtn.click();
+
+                            const validationTab = await waitForElement('a[data-toggle="tab"][href="#question-validation"]');
+                            validationTab.click();
+
+                            let radioId = '#required-none';
+                            if (opt.value === 'required') {
+                                radioId = '#required-hard';
+                            } else if (opt.value === 'soft_required') {
+                                radioId = '#required-soft';
+                            }
+
+                            const targetRadio = await waitForElement(radioId);
+                            targetRadio.click();
+                            targetRadio.dispatchEvent(new Event('change', { bubbles: true }));
+
+                            const saveBtn = await waitForElement('button.js-save-quest[type="submit"], #js-question-edit-action-submit');
+                            saveBtn.click();
+
+                        } catch (err) {
+                            console.error('[Alchemer Builder Suite] Error updating requirement setting:', err);
+                            const prevVal = detectRequirementState(questionCard);
+                            const fallbackRadio = controlsWrap.querySelector(`input[name="alc_req_${elemUid}"][value="${prevVal}"]`);
+                            if (fallbackRadio) fallbackRadio.checked = true;
+                        } finally {
+                            controlsWrap.classList.remove('is-busy');
+                            delete controlsWrap.dataset.busy;
+                        }
+                    });
+
+                    lblOpt.appendChild(rOpt);
+                    lblOpt.appendChild(document.createTextNode(opt.text));
+                    reqRadioBox.appendChild(lblOpt);
+                });
+
+                reqGroup.appendChild(reqLabel);
+                reqGroup.appendChild(reqRadioBox);
+                controlsWrap.appendChild(reqGroup);
+            }
+
+            // Handler: Toggle Status Radio Change
+            const handleStatusChange = async (shouldEnable) => {
+                controlsWrap.classList.add('is-busy');
                 controlsWrap.dataset.busy = 'true';
-                checkbox.disabled = true;
-                selectReq.disabled = true;
 
                 try {
                     editBtn.click();
@@ -1026,59 +1122,21 @@
                     const saveBtn = await waitForElement('#js-question-edit-action-submit, button.js-save-quest[type="submit"]');
                     saveBtn.click();
 
-                    labelText.textContent = shouldEnable ? 'On' : 'Off';
-
                     if (questionCard) {
                         questionCard.classList.toggle('disabled-element', !shouldEnable);
                     }
                 } catch (err) {
                     console.error('[Alchemer Builder Suite] Error toggling status:', err);
-                    checkbox.checked = !shouldEnable;
-                    labelText.textContent = checkbox.checked ? 'On' : 'Off';
+                    rEnable.checked = !shouldEnable;
+                    rDisable.checked = shouldEnable;
                 } finally {
-                    switchLabel.classList.remove('is-busy');
+                    controlsWrap.classList.remove('is-busy');
                     delete controlsWrap.dataset.busy;
-                    checkbox.disabled = false;
-                    selectReq.disabled = false;
                 }
-            });
+            };
 
-            // Handler: Requirement Dropdown Change
-            selectReq.addEventListener('change', async () => {
-                const selectedValue = selectReq.value;
-                controlsWrap.dataset.busy = 'true';
-                checkbox.disabled = true;
-                selectReq.disabled = true;
-
-                try {
-                    editBtn.click();
-
-                    const validationTab = await waitForElement('a[data-toggle="tab"][href="#question-validation"]');
-                    validationTab.click();
-
-                    let radioId = '#required-none';
-                    if (selectedValue === 'required') {
-                        radioId = '#required-hard';
-                    } else if (selectedValue === 'soft_required') {
-                        radioId = '#required-soft';
-                    }
-
-                    const targetRadio = await waitForElement(radioId);
-                    targetRadio.click();
-                    targetRadio.dispatchEvent(new Event('change', { bubbles: true }));
-
-                    const saveBtn = await waitForElement('button.js-save-quest[type="submit"], #js-question-edit-action-submit');
-                    saveBtn.click();
-
-                } catch (err) {
-                    console.error('[Alchemer Builder Suite] Error updating requirement setting:', err);
-                    selectReq.value = detectRequirementState(questionCard);
-                } finally {
-                    delete controlsWrap.dataset.busy;
-                    checkbox.disabled = false;
-                    selectReq.disabled = false;
-                }
-            });
+            rEnable.addEventListener('change', () => handleStatusChange(true));
+            rDisable.addEventListener('change', () => handleStatusChange(false));
 
             container.appendChild(controlsWrap);
         });

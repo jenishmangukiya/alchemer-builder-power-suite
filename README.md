@@ -8,7 +8,7 @@
 
 A Tampermonkey userscript that lives right in your **Alchemer side navigation bar** and opens a dark, SaaS-style control panel — one-page survey mode, an auto-highlighting page minimap, inline quick controls, expandable textareas, and canvas scroll unlocking — all directly inside the Alchemer survey builder.
 
-[![Version](https://img.shields.io/badge/version-9.1.0-blue?style=flat-square)](https://github.com/jenishmangukiya/alchemer-builder-power-suite)
+[![Version](https://img.shields.io/badge/version-9.5.0-blue?style=flat-square)](https://github.com/jenishmangukiya/alchemer-builder-power-suite)
 [![Platform](https://img.shields.io/badge/platform-Alchemer%20Builder-6f4bd8?style=flat-square)](https://www.alchemer.com/)
 [![Powered by](https://img.shields.io/badge/powered%20by-Tampermonkey-00a94f?style=flat-square)](https://www.tampermonkey.net/)
 [![Author](https://img.shields.io/badge/author-Jenish%20Mangukiya-orange?style=flat-square)](#-credits)
@@ -19,7 +19,7 @@ A Tampermonkey userscript that lives right in your **Alchemer side navigation ba
 
 <div align="center">
 
-<img src="assets/builder-suite-ui.png" alt="Alchemer Builder Power Suite panel open in the Alchemer side navigation bar" width="420">
+<img src="assets/main_tool_left_nav.png" alt="Alchemer Builder Power Suite panel open in the Alchemer side navigation bar" width="420">
 
 **The ⚡ SUITE item in your sidebar opens the Builder Suite control panel.**
 
@@ -53,13 +53,45 @@ A Tampermonkey userscript that lives right in your **Alchemer side navigation ba
 | Feature | What it does |
 | --- | --- |
 | **🧭 Built into the Side Nav** | Adds a glowing **SUITE** item to Alchemer's own left navigation, complete with a gradient icon and a pulsing live beacon. Easy to spot and always within reach — no floating widget to chase around the screen. |
-| **🪟 Builder Suite Panel** | A polished dark popover card (`v9.1 PRO`) that anchors beside the nav item, auto-clamps to stay on screen at any window size, and closes when you click away. |
+| **🪟 Builder Suite Panel** | A polished dark popover card (`v9.5 PRO`) that anchors beside the nav item, auto-clamps to stay on screen at any window size, and closes when you click away. |
 | **📄 Entire Survey Mode** | One click toggles `?c=0&p=0` and renders the whole survey on a single page — click again to return to normal paged mode. |
 | **📍 Auto-Highlighting Minimap** | A glass rail of page indicators on the right margin. The page you're currently viewing is highlighted automatically and scrolled into view, with `P.n — title` tooltips on hover. |
 | **⚡ Quick Controls** | Turn individual questions on or off right from the question action links, without opening full settings. |
 | **📋 Requirement Controls** | Instantly switch a question between **Not required**, **Required**, and **Soft Required** from an inline dropdown. |
 | **🔓 Edit Canvas Scroll** | Fixes locked background scrolling while edit panes or modals are open, so you can keep working. |
 | **↕️ Expand Textareas** | Auto-growing, vertically resizable textareas in the edit panes, so long labels and option text are easy to read and edit. |
+
+---
+
+## 🖼️ Feature gallery
+
+<div align="center">
+
+### 🧭 Built into the Side Nav
+
+<img src="assets/main_tool_left_nav.png" alt="The SUITE control panel open beside the Alchemer left navigation bar" width="420">
+
+A glowing **SUITE** item in Alchemer's own left nav opens the full control panel — every tool is one click away.
+
+### 📍 Auto-Highlighting Minimap
+
+<img src="assets/minimap.png" alt="Right-margin page minimap highlighting the current page with a tooltip" width="480">
+
+A glass rail of page dots tracks your position, scrolls the current page into view, and shows `P.n — title` tooltips on hover.
+
+### ⚡ Quick Controls & 📋 Requirement Controls
+
+<img src="assets/quick_controls.png" alt="Inline enable/disable and requirement controls attached to the question action links" width="420">
+
+Toggle a question **on or off** and switch its requirement level (**Not required / Required / Soft Required**) right from the question action links — no full settings pane needed.
+
+### ↕️ Expand Textareas
+
+<img src="assets/textarea_expand.png" alt="Before and after: long option text fully visible in auto-growing textareas" width="620">
+
+Long labels and option text auto-grow so you can read and edit the full value without fighting a tiny, locked textarea.
+
+</div>
 
 ---
 
@@ -147,7 +179,10 @@ No. It's an independent, community-built tool and is not affiliated with or endo
 alchemer-builder-power-suite/
 ├── alchemer-builder-power-suite.user.js   # The Tampermonkey userscript
 ├── assets/
-│   └── builder-suite-ui.png               # Screenshot of the Builder Suite panel
+│   ├── main_tool_left_nav.png             # The SUITE panel in the left navigation bar
+│   ├── minimap.png                        # Auto-highlighting page minimap
+│   ├── quick_controls.png                 # Inline enable/disable and requirement controls
+│   └── textarea_expand.png                # Before/after of expandable textareas
 └── README.md                              # This file
 ```
 
@@ -163,7 +198,7 @@ alchemer-builder-power-suite/
 
 <div align="center">
 
-**Alchemer Builder Power Suite** · v9.1.0
+**Alchemer Builder Power Suite** · v9.5.0
 
 Built to make survey building faster ⚡
 
